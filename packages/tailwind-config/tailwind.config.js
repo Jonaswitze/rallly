@@ -3,10 +3,9 @@ const defaultTheme = require("tailwindcss/defaultTheme");
 
 module.exports = {
   content: [
-    "./src/pages/**/*.{ts,tsx}",
-    "./src/components/**/*.{ts,tsx}",
-    "../../packages/tailwind-config/tailwind.config.js",
+    "./src/**/*.{ts,tsx}",
     "../../packages/ui/**/*.{ts,tsx}",
+    "../../packages/tailwind-config/tailwind.config.js",
   ],
   plugins: [
     require("@tailwindcss/typography"),
@@ -22,20 +21,20 @@ module.exports = {
         primary: {
           ...colors.indigo,
           DEFAULT: colors.indigo["600"],
-          foreground: colors.white,
+          foreground: colors.indigo["50"],
           background: colors.indigo["50"],
         },
         secondary: {
           background: colors.gray["100"],
           DEFAULT: colors.gray["100"],
-          foreground: colors.gray["800"],
+          foreground: colors.gray["700"],
         },
         gray: colors.gray,
         border: colors.gray["200"],
         input: {
           DEFAULT: colors.gray["200"],
           background: colors.white,
-          foreground: colors.gray["800"],
+          foreground: colors.gray["700"],
         },
         ring: {
           DEFAULT: colors.gray["300"],
@@ -46,7 +45,7 @@ module.exports = {
           foreground: colors.rose["50"],
         },
         background: colors.white,
-        foreground: colors.gray["800"],
+        foreground: colors.gray["700"],
         accent: {
           DEFAULT: colors.gray["100"],
         },
@@ -57,12 +56,12 @@ module.exports = {
         },
         popover: {
           DEFAULT: colors.white,
-          foreground: colors.gray["800"],
+          foreground: colors.gray["700"],
         },
         card: {
           DEFAULT: colors.white,
           background: colors.white,
-          foreground: colors.gray["800"],
+          foreground: colors.gray["700"],
         },
       },
       keyframes: {

@@ -1,5 +1,6 @@
 import clsx from "clsx";
-import dayjs, { Dayjs } from "dayjs";
+import type { Dayjs } from "dayjs";
+import dayjs from "dayjs";
 
 export const DateIconInner = (props: {
   dow?: React.ReactNode;
@@ -10,14 +11,14 @@ export const DateIconInner = (props: {
   return (
     <div
       className={clsx(
-        "inline-flex h-12 w-12 flex-col overflow-hidden rounded-md border bg-gray-50 text-center text-slate-800",
+        "inline-flex size-10 flex-col overflow-hidden rounded-md border bg-gray-50 text-center text-slate-800",
         props.className,
       )}
     >
       <div className="text-muted-foreground border-b border-gray-200 text-xs font-normal leading-4">
         {props.dow}
       </div>
-      <div className="flex grow items-center justify-center bg-white text-lg font-semibold leading-none tracking-tight">
+      <div className="flex grow items-center justify-center bg-white text-sm font-medium leading-none tracking-tight">
         {props.day}
       </div>
     </div>

@@ -15,18 +15,21 @@ function joinPath(baseUrl: string, subpath = "") {
   return baseUrl;
 }
 
-export function absoluteUrl(subpath = "", query?: Record<string, string>) {
-  const queryString = query
-    ? `?${Object.entries(query)
-        .map(([key, value]) => `${key}=${encodeURIComponent(value)}`)
-        .join("&")}`
-    : "";
+export function absoluteUrl(subpath = "", query: Record<string, string> = {}) {
   const baseUrl =
     process.env.NEXT_PUBLIC_BASE_URL ??
     getVercelUrl() ??
     `http://localhost:${port}`;
 
-  return joinPath(baseUrl, subpath) + queryString;
+  const url = new URL(subpath, baseUrl);
+
+  Object.entries(query).forEach(([key, value]) => {
+    url.searchParams.set(key, value);
+  });
+
+  const urlString = url.href;
+
+  return urlString.endsWith("/") ? urlString.slice(0, -1) : urlString;
 }
 
 export function shortUrl(subpath = "") {

@@ -1,27 +1,31 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { VoteType } from "@rallly/database";
+import type { VoteType } from "@rallly/database";
+import { Badge } from "@rallly/ui/badge";
 import { Button } from "@rallly/ui/button";
+import { FormMessage } from "@rallly/ui/form";
+import { Input } from "@rallly/ui/input";
+import * as Sentry from "@sentry/nextjs";
+import { TRPCClientError } from "@trpc/client";
 import clsx from "clsx";
 import { useTranslation } from "next-i18next";
 import { useForm } from "react-hook-form";
-import { useMount } from "react-use";
 import z from "zod";
 
 import { usePoll } from "@/contexts/poll";
 
 import { useAddParticipantMutation } from "./poll/mutations";
 import VoteIcon from "./poll/vote-icon";
-import { TextInput } from "./text-input";
+import { useUser } from "./user-provider";
 
 const requiredEmailSchema = z.object({
   requireEmail: z.literal(true),
-  name: z.string().min(1),
+  name: z.string().min(1).max(100),
   email: z.string().email(),
 });
 
 const optionalEmailSchema = z.object({
   requireEmail: z.literal(false),
-  name: z.string().min(1),
+  name: z.string().min(1).max(100),
   email: z.string().email().or(z.literal("")),
 });
 
@@ -66,15 +70,13 @@ const VoteSummary = ({
         return (
           <div
             key={voteType}
-            className="flex h-8 select-none divide-x rounded border bg-gray-50 text-sm"
+            className="flex h-8 select-none gap-2.5 rounded-lg border bg-gray-50 p-1 text-sm"
           >
-            <div className="flex items-center gap-2 pl-2 pr-3">
+            <div className="flex items-center gap-2">
               <VoteIcon type={voteType} />
-              <div>{t(voteType)}</div>
+              <div className="text-muted-foreground">{t(voteType)}</div>
             </div>
-            <div className="flex h-full items-center justify-center px-2 text-sm font-semibold text-gray-800">
-              {voteByType[voteType].length}
-            </div>
+            <Badge>{voteByType[voteType].length}</Badge>
           </div>
         );
       })}
@@ -88,28 +90,42 @@ export const NewParticipantForm = (props: NewParticipantModalProps) => {
 
   const isEmailRequired = poll.requireParticipantEmail;
 
-  const { register, formState, setFocus, handleSubmit } =
+  const { user } = useUser();
+  const isLoggedIn = !user.isGuest;
+  const { register, setError, formState, handleSubmit } =
     useForm<NewParticipantFormData>({
       resolver: zodResolver(schema),
       defaultValues: {
         requireEmail: isEmailRequired,
+        ...(isLoggedIn
+          ? { name: user.name, email: user.email ?? "" }
+          : {
+              name: "",
+              email: "",
+            }),
       },
     });
   const addParticipant = useAddParticipantMutation();
-  useMount(() => {
-    setFocus("name");
-  });
 
   return (
     <form
       onSubmit={handleSubmit(async (data) => {
-        const newParticipant = await addParticipant.mutateAsync({
-          name: data.name,
-          votes: props.votes,
-          email: data.email,
-          pollId: poll.id,
-        });
-        props.onSubmit?.(newParticipant);
+        try {
+          const newParticipant = await addParticipant.mutateAsync({
+            name: data.name,
+            votes: props.votes,
+            email: data.email,
+            pollId: poll.id,
+          });
+          props.onSubmit?.(newParticipant);
+        } catch (error) {
+          if (error instanceof TRPCClientError) {
+            setError("root", {
+              message: error.message,
+            });
+          }
+          Sentry.captureException(error);
+        }
       })}
       className="space-y-4"
     >
@@ -117,9 +133,10 @@ export const NewParticipantForm = (props: NewParticipantModalProps) => {
         <label htmlFor="name" className="mb-1 text-gray-500">
           {t("name")}
         </label>
-        <TextInput
+        <Input
           className="w-full"
           data-1p-ignore="true"
+          autoFocus={true}
           error={!!formState.errors.name}
           disabled={formState.isSubmitting}
           placeholder={t("namePlaceholder")}
@@ -136,7 +153,7 @@ export const NewParticipantForm = (props: NewParticipantModalProps) => {
           {t("email")}
           {!isEmailRequired ? ` (${t("optional")})` : null}
         </label>
-        <TextInput
+        <Input
           className="w-full"
           error={!!formState.errors.email}
           disabled={formState.isSubmitting}
@@ -153,6 +170,9 @@ export const NewParticipantForm = (props: NewParticipantModalProps) => {
         <label className="mb-1 text-gray-500">{t("response")}</label>
         <VoteSummary votes={props.votes} />
       </fieldset>
+      {formState.errors.root?.message ? (
+        <FormMessage>{formState.errors.root.message}</FormMessage>
+      ) : null}
       <div className="flex gap-2">
         <Button onClick={props.onCancel}>{t("cancel")}</Button>
         <Button

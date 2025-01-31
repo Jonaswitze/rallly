@@ -1,24 +1,23 @@
-import { ArrowUpRight } from "@rallly/icons";
-import { m } from "framer-motion";
+"use client";
+import { motion } from "framer-motion";
+import { ArrowUpRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { NextSeo } from "next-seo";
 import React from "react";
 
-import Bonus from "@/components/home/bonus";
 import { Trans } from "@/components/trans";
 
-// const UsedBy = () => {
+// export const UsedBy = () => {
 //   return (
 //     <div>
 //       <h2 className="mx-auto mb-8 max-w-2xl text-center leading-relaxed">
-//         Used by employees of some of the world's most influential companies and
+//         Trusted by some of the world's most influential companies and
 //         organizations
 //       </h2>
 //       <div className="flex flex-wrap justify-center gap-8">
 //         <div className="relative h-12 w-24 grayscale hover:grayscale-0">
 //           <Image
-//             src="/icrc-logo.svg"
+//             src="/static/images/icrc-logo.svg"
 //             fill
 //             style={{ objectFit: "contain" }}
 //             alt="ICRC"
@@ -77,7 +76,7 @@ import { Trans } from "@/components/trans";
 //   );
 // };
 
-// const Testimonials = () => {
+// export const Testimonials = () => {
 //   return (
 //     <div>
 //       <h2 className="mb-12 text-center">Testimonials</h2>
@@ -104,7 +103,7 @@ import { Trans } from "@/components/trans";
 //             href="https://www.trustpilot.com/evaluate/rallly.co"
 //           >
 //             <span>Share your experience</span>
-//             <ArrowRight className="h-4 w-4" />
+//             <ArrowRight className="size-4" />
 //           </Link>
 //         </Button>
 //       </div> */}
@@ -112,14 +111,14 @@ import { Trans } from "@/components/trans";
 //   );
 // };
 
-// const Testimonial = ({
+// export const Testimonial = ({
 //   author,
 //   children,
 //   logo,
 // }: React.PropsWithChildren<{ author: string; logo?: string }>) => {
 //   return (
 //     <div className="relative flex flex-col space-y-4 rounded-md bg-gray-50 px-4 py-3 shadow-sm">
-//       <QuoteIcon className="h-4 w-4 text-gray-400" />
+//       <QuoteIcon className="size-4 text-gray-400" />
 //       <div className="flex justify-between">
 //         <div className="flex flex-col gap-2">
 //           <div className="font-semibold">{author}</div>
@@ -131,7 +130,7 @@ import { Trans } from "@/components/trans";
 //           />
 //         </div>
 //         {logo ? (
-//           <div className="relative h-16 w-16">
+//           <div className="relative size-16">
 //             <Image src={logo} fill alt="logo" />
 //           </div>
 //         ) : null}
@@ -158,7 +157,7 @@ const Mention = ({
   delay?: number;
 }>) => {
   return (
-    <m.div
+    <motion.div
       transition={{
         delay,
         type: "spring",
@@ -171,11 +170,11 @@ const Mention = ({
     >
       <div className="flex items-start justify-between">{logo}</div>
       <p className="grow text-center text-base">{children}</p>
-    </m.div>
+    </motion.div>
   );
 };
 
-const MentionedBy = () => {
+export const MentionedBy = () => {
   return (
     <div>
       <div className="grid gap-8 md:grid-cols-4">
@@ -256,9 +255,9 @@ const MentionedBy = () => {
   );
 };
 
-const BigTestimonial = () => {
+export const BigTestimonial = () => {
   return (
-    <m.div
+    <motion.div
       transition={{
         duration: 1,
         type: "spring",
@@ -267,7 +266,7 @@ const BigTestimonial = () => {
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: "all" }}
-      className="flex flex-col items-center gap-y-8 "
+      className="flex flex-col items-center gap-y-8"
     >
       <Image
         src="/static/images/stars-5.svg"
@@ -289,7 +288,7 @@ const BigTestimonial = () => {
             href="https://www.trustpilot.com/reviews/645e1d1976733924e89d8203"
           >
             <Trans i18nKey="home:viaTrustpilot" defaults="via Trustpilot" />
-            <ArrowUpRight className="ml-1 inline h-3 w-3" />
+            <ArrowUpRight className="ml-1 inline size-3" />
           </Link>
         </p>
       </div>
@@ -311,21 +310,10 @@ const BigTestimonial = () => {
           </div>
         </div>
       </div>
-    </m.div>
+    </motion.div>
   );
 };
 
-export const Marketing = ({
-  children,
-  ...props
-}: React.PropsWithChildren<{ title: string; description: string }>) => {
-  return (
-    <div className="space-y-12 sm:space-y-24">
-      <NextSeo {...props} />
-      {children}
-      <Bonus />
-      <BigTestimonial />
-      <MentionedBy />
-    </div>
-  );
+export const Marketing = ({ children }: React.PropsWithChildren) => {
+  return <div className="space-y-12 sm:space-y-24">{children}</div>;
 };

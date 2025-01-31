@@ -1,15 +1,15 @@
-import { ArrowUpRight } from "@rallly/icons";
 import { Button } from "@rallly/ui/button";
 import { Form, FormField, FormItem, FormLabel } from "@rallly/ui/form";
+import { ArrowUpRight } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
 import { useTranslation } from "next-i18next";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { LanguageSelect } from "@/components/poll/language-selector";
 import { Trans } from "@/components/trans";
-import { updateLanguage } from "@/contexts/preferences";
+import { usePreferences } from "@/contexts/preferences";
 
 const formSchema = z.object({
   language: z.string(),
@@ -25,13 +25,14 @@ export const LanguagePreference = () => {
       language: i18n.language,
     },
   });
+  const { updatePreferences } = usePreferences();
 
   return (
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(async (data) => {
-          updateLanguage(data.language);
-          router.reload();
+          await updatePreferences({ locale: data.language });
+          router.refresh();
         })}
       >
         <FormField
@@ -61,7 +62,7 @@ export const LanguagePreference = () => {
               href="https://support.rallly.co/contribute/translations"
             >
               <Trans i18nKey="becomeATranslator" defaults="Help translate" />
-              <ArrowUpRight className="h-4 w-4" />
+              <ArrowUpRight className="size-4" />
             </Link>
           </Button>
         </div>

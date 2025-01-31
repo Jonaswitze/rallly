@@ -1,9 +1,7 @@
 {
-  "pricing": "Priser",
   "pricingDescription": "Kom i gang gratis. Ingen innlogging kreves.",
   "freeForever": "gratis for alltid",
   "planPro": "Pro",
-  "annualBillingDescription": "per måned, fakturert årlig",
   "monthlyBillingDescription": "per måned",
   "upgrade": "Oppgrader",
   "faq": "Ofte stilte spørsmål",
@@ -26,5 +24,11 @@
   "upgradeNowSaveLater": "Oppgrader nå, spar senere",
   "earlyAdopterDescription": "Som en tidlig bruker, vil du beholde nåværende abonnementspris uten å bli påvirket av fremtidige prisøkninger.",
   "planFree": "Gratis",
-  "keepPollsIndefinitely": "Behold avstemninger på ubestemt tid"
+  "keepPollsIndefinitely": "Behold avstemninger på ubestemt tid",
+  "whenPollInactive": "Når blir en avstemning inaktiv?",
+  "whenPollInactiveAnswer": "Avstemninger blir inaktive når alle datovalgene ligger i fortiden OG avstemningen ikke har blitt åpnet på over 30 dager. Inaktive avstemninger slettes automatisk hvis du ikke har et betalt abonnement.",
+  "yearlyBillingDescription": "per år",
+  "annualBenefit": "{count} måneder gratis",
+  "pricingTitle": "Kom i gang gratis",
+  "pricingSubtitle": "Oppgrader til en betalt plan for å få tilgang til premiumfunksjoner"
 }

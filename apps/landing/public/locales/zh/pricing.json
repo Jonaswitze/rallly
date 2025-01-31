@@ -1,9 +1,7 @@
 {
-  "pricing": "价格",
   "pricingDescription": "无需登录即可开始免费使用。",
   "freeForever": "永远免费",
   "planPro": "专业版",
-  "annualBillingDescription": "每月，按年计费",
   "monthlyBillingDescription": "每月",
   "upgrade": "升级",
   "faq": "常见问题",
@@ -13,8 +11,8 @@
   "howToUpgradeAnswer": "如需要升级，您可以前往 <a>订阅设置</a> 并点击<b>升级</b>。",
   "cancelSubscription": "我如何取消我的订阅？",
   "cancelSubscriptionAnswer": "你可以随时前往 <a>订阅设置</a> 取消您的订阅。取消订阅后，您仍然可以访问付费方案，直到计费周期结束。之后，您将降级为免费方案。",
-  "billingPeriodMonthly": "每月",
-  "billingPeriodYearly": "每年",
+  "billingPeriodMonthly": "按月付费",
+  "billingPeriodYearly": "按年付费",
   "planFreeDescription": "对于临时用户",
   "limitedAccess": "使用核心功能",
   "pollsDeleted": "投票处于非活动状态时将自动删除",
@@ -26,5 +24,11 @@
   "upgradeNowSaveLater": "立即升级，节省更多",
   "earlyAdopterDescription": "作为早期支持者，折扣将在订阅后锁定，您将不会受到未来涨价的影响",
   "planFree": "免费版",
-  "keepPollsIndefinitely": "无限期保留投票"
+  "keepPollsIndefinitely": "无限期保留投票",
+  "whenPollInactive": "投票何时不活跃？",
+  "whenPollInactiveAnswer": "当所有日期选项过去并且投票未访问超过30天时，投票变为不活动状态。如果您没有付费订阅，不活动的投票将被自动删除。",
+  "yearlyBillingDescription": "每年",
+  "annualBenefit": "{count} 个月免费",
+  "pricingTitle": "开始免费使用",
+  "pricingSubtitle": "升级到付费计划以获得高级功能"
 }

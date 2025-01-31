@@ -1,146 +1,108 @@
-import { MapPinIcon, MousePointerClickIcon, TextIcon } from "@rallly/icons";
+"use client";
+import { Alert, AlertDescription, AlertTitle } from "@rallly/ui/alert";
+import { Card, CardContent, CardDescription } from "@rallly/ui/card";
+import { Icon } from "@rallly/ui/icon";
 import dayjs from "dayjs";
-import { useTranslation } from "next-i18next";
+import { DotIcon, MapPinIcon, PauseIcon } from "lucide-react";
 
-import { Card } from "@/components/card";
-import { DateIcon } from "@/components/date-icon";
-import { ParticipantAvatarBar } from "@/components/participant-avatar-bar";
-import { useParticipants } from "@/components/participants-provider";
+import TruncatedLinkify from "@/components/poll/truncated-linkify";
+import VoteIcon from "@/components/poll/vote-icon";
 import { PollStatusBadge } from "@/components/poll-status";
+import { RandomGradientBar } from "@/components/random-gradient-bar";
 import { Trans } from "@/components/trans";
-import { IfParticipantsVisible } from "@/components/visibility";
 import { usePoll } from "@/contexts/poll";
-import { generateGradient } from "@/utils/color-hash";
-import { useDayjs } from "@/utils/dayjs";
-import { preventWidows } from "@/utils/prevent-widows";
+import { useTranslation } from "@/i18n/client";
 
-import PollSubheader from "./poll/poll-subheader";
-import TruncatedLinkify from "./poll/truncated-linkify";
-import VoteIcon from "./poll/vote-icon";
-
-export const EventCard = () => {
-  const { t } = useTranslation();
-  const poll = usePoll();
-
-  const { participants } = useParticipants();
-
-  const { adjustTimeZone } = useDayjs();
-
-  const attendees = participants.filter((participant) =>
-    participant.votes.some(
-      (vote) =>
-        vote.optionId === poll?.event?.optionId &&
-        (vote.type === "yes" || vote.type === "ifNeedBe"),
-    ),
-  );
-
-  const status = poll?.event ? "closed" : poll?.closed ? "paused" : "live";
-
-  if (!poll) {
-    return null;
-  }
-
+function IconGuide() {
   return (
-    <Card fullWidthOnMobile={false}>
-      <div className="divide-y">
-        <div
-          className="h-2"
-          style={{ background: generateGradient(poll.id) }}
-        />
-        <div className="bg-pattern p-4 sm:flex sm:flex-row-reverse sm:justify-between sm:px-6">
-          <div className="mb-2">
-            <PollStatusBadge status={status} />
-          </div>
-          <div className="flex items-start justify-between">
-            <div className="flex items-start gap-4 sm:gap-6">
-              {poll.event ? (
-                <div>
-                  <DateIcon
-                    date={adjustTimeZone(poll.event.start, !poll.timeZone)}
-                  />
-                </div>
-              ) : null}
-              <div>
-                {poll.event ? (
-                  <div className="text-muted-foreground text-sm">
-                    {poll.event.duration === 0
-                      ? adjustTimeZone(poll.event.start, !poll.timeZone).format(
-                          "LL",
-                        )
-                      : `${adjustTimeZone(
-                          poll.event.start,
-                          !poll.timeZone,
-                        ).format("LL LT")} - ${adjustTimeZone(
-                          dayjs(poll.event.start).add(
-                            poll.event.duration,
-                            "minutes",
-                          ),
-                          !poll.timeZone,
-                        ).format("LT")}`}
-                  </div>
-                ) : null}
-                <h1
-                  className="text-xl font-bold tracking-tight sm:text-2xl"
-                  data-testid="poll-title"
-                >
-                  {preventWidows(poll.title)}
-                </h1>
-                {!poll.event ? (
-                  <PollSubheader />
-                ) : (
-                  <div className="mt-4 space-y-2">
-                    <div className="text-muted-foreground text-sm">
-                      <Trans
-                        i18nKey="attendeeCount"
-                        defaults="{count, plural, one {# attendee} other {# attendees}}"
-                        values={{ count: attendees.length }}
-                      />
-                    </div>
-                    <IfParticipantsVisible>
-                      <ParticipantAvatarBar participants={attendees} max={10} />
-                    </IfParticipantsVisible>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-        <div className="space-y-4 p-4 sm:px-6">
-          {poll.description ? (
-            <div className="flex gap-4">
-              <TextIcon className="h-4 w-4 shrink-0 translate-y-1" />
-              <div className="whitespace-pre-line leading-relaxed">
-                <TruncatedLinkify>{poll.description}</TruncatedLinkify>
-              </div>
-            </div>
-          ) : null}
-          {poll.location ? (
-            <div className="flex gap-4">
-              <MapPinIcon className="h-4 w-4 translate-y-1" />
-              <TruncatedLinkify>{poll.location}</TruncatedLinkify>
-            </div>
-          ) : null}
-          <div className="flex gap-4">
-            <MousePointerClickIcon className="h-4 w-4 shrink-0 translate-y-0.5" />
-            <div>
-              <div className="flex gap-2.5">
-                <span className="inline-flex items-center space-x-1">
-                  <VoteIcon type="yes" />
-                  <span className="text-sm">{t("yes")}</span>
-                </span>
-                <span className="inline-flex items-center space-x-1">
-                  <VoteIcon type="ifNeedBe" />
-                  <span className="text-sm">{t("ifNeedBe")}</span>
-                </span>
-                <span className="inline-flex items-center space-x-1">
-                  <VoteIcon type="no" />
-                  <span className="text-sm">{t("no")}</span>
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </Card>
+    <ul className="flex items-center gap-x-3 whitespace-nowrap text-sm">
+      <li className="flex items-center gap-1.5">
+        <VoteIcon type="yes" />
+        <Trans i18nKey="yes" />
+      </li>
+      <li className="flex items-center gap-1.5">
+        <VoteIcon type="ifNeedBe" />
+        <Trans i18nKey="ifNeedBe" />
+      </li>
+      <li className="flex items-center gap-1.5">
+        <VoteIcon type="no" />
+        <Trans i18nKey="no" />
+      </li>
+    </ul>
   );
-};
+}
+
+export function EventCard() {
+  const poll = usePoll();
+  const { t } = useTranslation();
+  return (
+    <>
+      <Card className="bg-gray-50">
+        <RandomGradientBar seed={poll.id} />
+        <CardContent className="space-y-4 sm:space-y-6">
+          <div className="flex flex-col items-start gap-4 lg:flex-row lg:justify-between">
+            <div>
+              <h1 data-testid="poll-title" className="text-lg font-semibold">
+                {poll.title}
+              </h1>
+              <CardDescription>
+                <span className="flex items-center gap-0.5 whitespace-nowrap text-sm text-gray-500">
+                  <span>
+                    <Trans
+                      i18nKey="createdBy"
+                      values={{
+                        name: poll.user?.name ?? t("guest"),
+                      }}
+                      components={{
+                        b: <span />,
+                      }}
+                    />
+                  </span>
+                  <Icon>
+                    <DotIcon />
+                  </Icon>
+                  <span className="whitespace-nowrap">
+                    <Trans
+                      i18nKey="createdTime"
+                      values={{ relativeTime: dayjs(poll.createdAt).fromNow() }}
+                    />
+                  </span>
+                </span>
+              </CardDescription>
+            </div>
+            <PollStatusBadge status={poll.status} />
+          </div>
+          {poll.description ? (
+            <p className="min-w-0 whitespace-pre-wrap text-pretty text-sm leading-relaxed">
+              <TruncatedLinkify>{poll.description}</TruncatedLinkify>
+            </p>
+          ) : null}
+          <div className="flex flex-col justify-between gap-4 sm:flex-row sm:flex-wrap sm:items-center">
+            <IconGuide />
+            {poll.location ? (
+              <p className="text-muted-foregroun truncate whitespace-nowrap text-sm">
+                <Icon>
+                  <MapPinIcon className="-mt-0.5 mr-1.5 inline-block" />
+                </Icon>
+                <TruncatedLinkify>{poll.location}</TruncatedLinkify>
+              </p>
+            ) : null}
+          </div>
+        </CardContent>
+      </Card>
+      {poll.status === "paused" ? (
+        <Alert icon={PauseIcon}>
+          <AlertTitle>
+            <Trans i18nKey="pollStatusPaused" />
+          </AlertTitle>
+          <AlertDescription>
+            <Trans
+              i18nKey="pollStatusPausedDescription"
+              defaults="Votes cannot be submitted or edited at this time"
+            />
+          </AlertDescription>
+        </Alert>
+      ) : null}
+    </>
+  );
+}

@@ -1,8 +1,14 @@
-import { Trans as BaseTrans, useTranslation } from "next-i18next";
+import { Trans as BaseTrans, useTranslation } from "react-i18next";
 
-type TransWithContextProps = Omit<React.ComponentProps<typeof BaseTrans>, "t">;
+import type { TxKeyPath } from "../i18n/types";
 
-export const Trans = (props: TransWithContextProps) => {
+export const Trans = (props: {
+  i18nKey: TxKeyPath;
+  defaults?: string;
+  values?: Record<string, string | number | boolean | undefined>;
+  children?: React.ReactNode;
+  components?: Record<string, React.ReactElement> | React.ReactElement[];
+}) => {
   const { t } = useTranslation();
-  return <BaseTrans t={t} {...props} />;
+  return <BaseTrans ns="app" t={t} {...props} />;
 };

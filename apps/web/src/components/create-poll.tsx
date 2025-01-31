@@ -1,4 +1,5 @@
-import { trpc } from "@rallly/backend";
+"use client";
+import { usePostHog } from "@rallly/posthog/client";
 import { Button } from "@rallly/ui/button";
 import {
   Card,
@@ -8,7 +9,8 @@ import {
   CardTitle,
 } from "@rallly/ui/card";
 import { Form } from "@rallly/ui/form";
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
+import { signIn, useSession } from "next-auth/react";
 import React from "react";
 import { useForm } from "react-hook-form";
 import useFormPersist from "react-hook-form-persist";
@@ -16,9 +18,11 @@ import { useUnmount } from "react-use";
 
 import { PollSettingsForm } from "@/components/forms/poll-settings";
 import { Trans } from "@/components/trans";
-import { usePostHog } from "@/utils/posthog";
+import { useUser } from "@/components/user-provider";
+import { trpc } from "@/trpc/client";
 
-import { NewEventData, PollDetailsForm, PollOptionsForm } from "./forms";
+import type { NewEventData } from "./forms";
+import { PollDetailsForm, PollOptionsForm } from "./forms";
 
 const required = <T,>(v: T | undefined): T => {
   if (!v) {
@@ -37,7 +41,8 @@ export interface CreatePollPageProps {
 
 export const CreatePoll: React.FunctionComponent = () => {
   const router = useRouter();
-
+  const { user } = useUser();
+  const session = useSession();
   const form = useForm<NewEventData>({
     defaultValues: {
       title: "",
@@ -60,16 +65,22 @@ export const CreatePoll: React.FunctionComponent = () => {
   useUnmount(clear);
 
   const posthog = usePostHog();
-  const queryClient = trpc.useContext();
-  const createPoll = trpc.polls.create.useMutation();
+  const createPoll = trpc.polls.create.useMutation({
+    networkMode: "always",
+    onMutate: async () => {
+      if (session.status !== "authenticated") {
+        await signIn("guest", {
+          redirect: false,
+        });
+      }
+    },
+  });
 
   return (
     <Form {...form}>
       <form
-        className="pb-16"
         onSubmit={form.handleSubmit(async (formData) => {
           const title = required(formData?.title);
-
           await createPoll.mutateAsync(
             {
               title: title,
@@ -91,15 +102,18 @@ export const CreatePoll: React.FunctionComponent = () => {
                   pollId: res.id,
                   numberOfOptions: formData.options?.length,
                   optionsView: formData?.view,
+                  tier: user.tier,
+                  $set: {
+                    last_poll_created_at: new Date().toISOString(),
+                  },
                 });
-                queryClient.polls.list.invalidate();
                 router.push(`/poll/${res.id}`);
               },
             },
           );
         })}
       >
-        <div className="mx-auto max-w-4xl space-y-4 p-2 sm:p-8">
+        <div className="space-y-4">
           <Card>
             <CardHeader>
               <CardTitle>
@@ -130,7 +144,7 @@ export const CreatePoll: React.FunctionComponent = () => {
             className="w-full"
             variant="primary"
           >
-            <Trans i18nKey="createPoll" />
+            <Trans i18nKey="createPoll" defaults="Create poll" />
           </Button>
         </div>
       </form>

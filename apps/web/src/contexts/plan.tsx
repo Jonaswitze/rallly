@@ -1,27 +1,19 @@
-import { trpc } from "@rallly/backend";
+"use client";
 import { Badge } from "@rallly/ui/badge";
 import React from "react";
 
 import { Trans } from "@/components/trans";
-import { useUser } from "@/components/user-provider";
+import { trpc } from "@/trpc/client";
 import { isSelfHosted } from "@/utils/constants";
 
 export const useSubscription = () => {
-  const { user } = useUser();
-
   const { data } = trpc.user.subscription.useQuery(undefined, {
-    enabled: !isSelfHosted && user.isGuest === false,
+    enabled: !isSelfHosted,
   });
 
   if (isSelfHosted) {
     return {
       active: true,
-    };
-  }
-
-  if (user.isGuest) {
-    return {
-      active: false,
     };
   }
 
@@ -43,9 +35,9 @@ export const IfSubscribed = ({ children }: React.PropsWithChildren) => {
 };
 
 export const IfFreeUser = ({ children }: React.PropsWithChildren) => {
-  const plan = usePlan();
+  const subscription = useSubscription();
 
-  return plan === "free" ? <>{children}</> : null;
+  return subscription?.active === false ? <>{children}</> : null;
 };
 
 export const Plan = () => {
@@ -53,14 +45,14 @@ export const Plan = () => {
 
   if (plan === "paid") {
     return (
-      <Badge>
+      <Badge variant="primary">
         <Trans i18nKey="planPro" defaults="Pro" />
       </Badge>
     );
   }
 
   return (
-    <Badge variant="secondary">
+    <Badge>
       <Trans i18nKey="planFree" defaults="Free" />
     </Badge>
   );

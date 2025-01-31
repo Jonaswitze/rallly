@@ -1,18 +1,14 @@
-import { devices, PlaywrightTestConfig } from "@playwright/test";
-import dotenv from "dotenv";
-import path from "path";
+import { loadEnvConfig } from "@next/env";
+import type { PlaywrightTestConfig } from "@playwright/test";
+import { devices } from "@playwright/test";
 
 const ci = process.env.CI === "true";
 
-dotenv.config({ path: path.resolve(__dirname, "../../", ".env") });
+loadEnvConfig(process.cwd());
 
-// Use process.env.PORT by default and fallback to port 3000
-const PORT = process.env.PORT || 3000;
-
+const port = process.env.PORT || 3002;
 // Set webServer.url and use.baseURL with the location of the WebServer respecting the correct set port
-const baseURL = `http://localhost:${PORT}`;
-
-process.env.NEXT_PUBLIC_BASE_URL = baseURL;
+const baseURL = `http://localhost:${port}`;
 
 // Reference: https://playwright.dev/docs/test-configuration
 const config: PlaywrightTestConfig = {
@@ -25,12 +21,18 @@ const config: PlaywrightTestConfig = {
     permissions: ["clipboard-read"],
     trace: "retain-on-failure",
   },
-  webServer: {
-    command: `NODE_ENV=test yarn dev --port ${PORT}`,
-    url: baseURL,
-    timeout: 120 * 1000,
-    reuseExistingServer: !ci,
-  },
+  testDir: "./tests",
+  webServer: ci
+    ? {
+        command: `NODE_ENV=test next start --port ${port}`,
+        url: baseURL,
+        reuseExistingServer: false,
+      }
+    : {
+        command: `NODE_ENV=test next dev --port ${port}`,
+        url: baseURL,
+        reuseExistingServer: true,
+      },
   reporter: [
     [ci ? "github" : "list"],
     ["html", { open: !ci ? "on-failure" : "never" }],
