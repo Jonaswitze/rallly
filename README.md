@@ -6,7 +6,7 @@
 <br />
 <div align="center">
   
-[![Actions Status](https://github.com/lukevella/rallly/workflows/CI/badge.svg?branch=main)](https://github.com/lukevella/rallly/actions)
+[![Actions Status](https://github.com/lukevella/rallly/actions/workflows/ci.yml/badge.svg)](https://github.com/lukevella/rallly/actions)
 [![Crowdin](https://badges.crowdin.net/rallly/localized.svg)](https://crowdin.com/project/rallly)
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-orange.svg)](https://www.gnu.org/licenses/agpl-3.0)
 [![Discord](https://img.shields.io/badge/-Join%20Chat-7289DA?logo=discord&logoColor=white)](https://discord.gg/uzg4ZcHbuM)
@@ -24,45 +24,66 @@ Built with [Next.js](https://github.com/vercel/next.js/), [Prisma](https://githu
 
 Check out the [self-hosting docs](https://support.rallly.co/self-hosting) for more information on running your own instance of Rallly.
 
-## Development
+## Local Installation
 
-Clone this repo and change directory to the root of the repository.
+The following instructions are for running the project locally for development.
 
-```bash
-git clone https://github.com/lukevella/rallly.git
-cd rallly
-```
+1. Clone the repository and switch to the project directory
 
-Install dependencies
+   ```bash
+   git clone https://github.com/lukevella/rallly.git
+   cd rallly
+   ```
 
-```
-yarn
-```
+2. Install dependencies
 
-Copy the sample `.env` file then open it and set the required [configuration options](https://support.rallly.co/self-hosting/configuration-options).
+   ```bash
+   yarn
+   ```
 
-```bash
-cp sample.env .env
-```
+3. Setup environment variables
 
-Next, run the following command:
+   Create a `.env` file by copying `.env.development`. This will be were you can set your [configuration options](https://support.rallly.co/self-hosting/configuration-options).
 
-```
-yarn db:generate && yarn db:reset
-```
+   ```bash
+   cp .env.development .env
+   ```
 
-This will:
+   **Note:** `.env.development` is preconfigured with default values for development. You can leave these as is for local development.
 
-- generate the prisma database client
-- run migrations to create the database schema
-- seed the database with some random data
+4. Generate Prisma client
 
-Start the Next.js server
+   ```bash
+   yarn db:generate
+   ```
 
-```
-# For development
-yarn dev
-```
+5. Setup database
+
+   You will need to have [Docker](https://docs.docker.com/get-docker/) installed and running to run the database using the provided docker-compose file.
+
+   To start the database, run:
+
+   ```bash
+   yarn docker:up
+   ```
+
+   Next run the following command to setup the database:
+
+   ```bash
+   yarn db:reset
+   ```
+
+   This will:
+
+   - delete the existing database (if it exists)
+   - run migrations to create a new database schema
+   - seed the database with test users and random data
+
+6. Start the Next.js server
+
+   ```bash
+   yarn dev
+   ```
 
 ## Contributors
 
@@ -80,6 +101,7 @@ Rallly is open-source under the GNU Affero General Public License Version 3 (AGP
 
 Thank you to our sponsors for making this project possible.
 
+<a href="https://github.com/coderabbitai" target="_blank"><img src="https://avatars.githubusercontent.com/u/132028505?s=200&v=4" width="48" height="48" /></a>&nbsp;
 <a href="https://github.com/cpnielsen" target="_blank"><img src="https://avatars.githubusercontent.com/u/1258576?v=4" width="48" height="48" /></a>&nbsp;
 <a href="https://github.com/iamericfletcher" target="_blank"><img src="https://avatars.githubusercontent.com/u/64165327?v=4" width="48" height="48" /></a>&nbsp;
 <a href="https://github.com/arcticFox-git" target="_blank"><img src="https://avatars.githubusercontent.com/u/86988982?v=4" width="48" height="48" /></a>&nbsp;
@@ -91,12 +113,14 @@ Thank you to our sponsors for making this project possible.
 
 And thank you to these companies for sponsoring and showing support for this project.
 
-<a href="https://appwrite.io?utm_source=rallly"><img src="./assets/images/appwrite.svg" alt="appwrite" height="24" /></a>
-&nbsp;&nbsp;&nbsp;
-<a href="https://vercel.com/?utm_source=rallly&utm_campaign=oss"><img src="./apps/landing/public/vercel-logotype-dark.svg" alt="Powered by Vercel" height="24" /></a>
-&nbsp;&nbsp;&nbsp;
-<a href="https://m.do.co/c/f91efc9c9e50"><img src="./apps/landing/public/digitalocean.svg" alt="Digital Ocean" height="24" /></a>
-&nbsp;&nbsp;&nbsp;
-<a href="https://sentry.io?utm_source=rallly"><img src="./apps/landing/public/sentry.svg" alt="Sentry" height="24" /></a>&nbsp;&nbsp;&nbsp;
-<a href="https://cloudron.io?utm_source=rallly"><img src="./assets/images/cloudron-logo.svg" alt="Cloudron" height="32"></a>&nbsp;&nbsp;&nbsp;
-<a href="https://featurebase.app?utm_source=rallly"><img src="./assets/images/featurebase.svg" alt="Featurebase" height="30"></a>
+<p>
+<a href="https://appwrite.io?utm_source=rallly"><img src="./assets/images/appwrite.svg" alt="appwrite" height="24" /></a>&nbsp;&nbsp;&nbsp;<!--
+--><a href="https://vercel.com/?utm_source=rallly&utm_campaign=oss"><img src="./assets/images/vercel-logotype-dark.svg#gh-light-mode-only" alt="Powered by Vercel" height="24" /></a>&nbsp;&nbsp;&nbsp;<!--
+--><a href="https://ura.design?utm_source=rallly"><img height="24" alt="Ura Design" src="./assets/images/ura-logo-blue.svg"></a>
+</p>
+<p>
+<a href="https://m.do.co/c/f91efc9c9e50"><img src="./assets/images/digitalocean-logo.svg" alt="Digital Ocean" height="24" /></a>&nbsp;&nbsp;&nbsp;<!--
+--><a href="https://sentry.io?utm_source=rallly"><img src="./assets/images/sentry.svg" alt="Sentry" height="24" /></a>&nbsp;&nbsp;&nbsp;<!--
+--><a href="https://cloudron.io?utm_source=rallly"><img src="./assets/images/cloudron-logo.svg" alt="Cloudron" height="30"></a>&nbsp;&nbsp;&nbsp;<!--
+--><a href="https://featurebase.app?utm_source=rallly"><img src="./assets/images/featurebase.svg" alt="Featurebase" height="28"></a>
+</p>

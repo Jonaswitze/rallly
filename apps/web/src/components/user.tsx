@@ -1,27 +1,13 @@
-import { UserIcon } from "@rallly/icons";
-import clsx from "clsx";
+"use client";
+import { cn } from "@rallly/ui";
+import { Icon } from "@rallly/ui/icon";
+import { User2Icon } from "lucide-react";
 
-import { useUser } from "@/components/user-provider";
 import { getRandomAvatarColor } from "@/utils/color-hash";
-
-export const CurrentUserAvatar = ({
-  size = "md",
-  className,
-}: Omit<UserAvatarProps, "name">) => {
-  const { user } = useUser();
-
-  return (
-    <UserAvatar
-      className={className}
-      name={user.isGuest ? undefined : user.name}
-      size={size}
-    />
-  );
-};
 
 interface UserAvatarProps {
   name?: string;
-  size?: "sm" | "md" | "lg";
+  size?: "xs" | "sm" | "md" | "lg";
   className?: string;
 }
 
@@ -33,18 +19,19 @@ export const UserAvatar = ({
   const colors = name ? getRandomAvatarColor(name) : null;
   return (
     <span
-      className={clsx(
+      className={cn(
         "inline-flex items-center justify-center overflow-hidden rounded-full font-semibold",
         {
-          "h-6 w-6 text-sm": size === "sm",
-          "h-8 w-8 text-base": size === "md",
-          "h-14 w-14 text-2xl": size === "lg",
+          "size-5 text-[10px]": size === "xs",
+          "size-6 text-sm": size === "sm",
+          "size-8 text-base": size === "md",
+          "size-12 text-lg": size === "lg",
         },
         !name
           ? "bg-gray-200"
           : colors?.requiresDarkText
-          ? "text-gray-800"
-          : "text-white",
+            ? "text-gray-800"
+            : "text-white",
         className,
       )}
       style={{
@@ -54,13 +41,9 @@ export const UserAvatar = ({
       {name ? (
         name[0].toUpperCase()
       ) : (
-        <UserIcon
-          className={clsx({
-            "h-4 w-4": size === "sm",
-            "h-6 w-6": size === "md",
-            "h-8 w-8": size === "lg",
-          })}
-        />
+        <Icon>
+          <User2Icon />
+        </Icon>
       )}
     </span>
   );

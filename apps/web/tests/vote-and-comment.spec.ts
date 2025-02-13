@@ -1,8 +1,9 @@
-import { expect, Page, Request, test } from "@playwright/test";
+import type { Page, Request } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 import { load } from "cheerio";
-import smtpTester, { SmtpTester } from "smtp-tester";
-import { PollPage } from "tests/poll-page";
+import type { PollPage } from "tests/poll-page";
 
+import { captureOne } from "./mailpit/mailpit";
 import { NewPollPage } from "./new-poll-page";
 
 test.describe(() => {
@@ -11,9 +12,7 @@ test.describe(() => {
   let touchRequest: Promise<Request>;
   let editSubmissionUrl: string;
 
-  let mailServer: SmtpTester;
   test.beforeAll(async ({ browser }) => {
-    mailServer = smtpTester.init(4025);
     page = await browser.newPage();
     touchRequest = page.waitForRequest(
       (request) =>
@@ -22,11 +21,9 @@ test.describe(() => {
     );
     const newPollPage = new NewPollPage(page);
     await newPollPage.goto();
-    pollPage = await newPollPage.createPollAndCloseDialog();
-  });
-
-  test.afterAll(async () => {
-    mailServer.stop();
+    pollPage = await newPollPage.createPollAndCloseDialog({
+      name: "Monthly Meetup",
+    });
   });
 
   test("should call touch endpoint", async () => {
@@ -52,17 +49,15 @@ test.describe(() => {
 
     await invitePage.addParticipant("Anne", "test@example.com");
 
-    await expect(page.locator("text='Anne'")).toBeVisible();
-
-    const { email } = await mailServer.captureOne("test@example.com", {
+    const { email } = await captureOne("test@example.com", {
       wait: 5000,
     });
 
-    expect(email.headers.subject).toBe(
-      "Thanks for responding to Monthly Meetup",
-    );
+    await expect(page.locator("text='Anne'")).toBeVisible();
 
-    const $ = load(email.html);
+    expect(email.Subject).toBe("Thanks for responding to Monthly Meetup");
+
+    const $ = load(email.HTML);
     const href = $("#editSubmissionUrl").attr("href");
 
     if (!href) {
@@ -74,6 +69,8 @@ test.describe(() => {
 
   test("should be able to edit submission", async ({ page: newPage }) => {
     await newPage.goto(editSubmissionUrl);
-    await expect(newPage.getByTestId("participant-menu")).toBeVisible();
+    await expect(newPage.getByTestId("participant-menu")).toBeVisible({
+      timeout: 10000,
+    });
   });
 });

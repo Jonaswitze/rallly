@@ -1,36 +1,22 @@
-import { trpc } from "@rallly/backend";
+"use client";
+import { Button } from "@rallly/ui/button";
+import { Icon } from "@rallly/ui/icon";
 import {
   ArrowLeftIcon,
   ArrowUpRight,
-  ChevronDownIcon,
-  FileBarChart,
   LogInIcon,
   LogOutIcon,
-  PauseCircleIcon,
-  PlayCircleIcon,
-  RotateCcw,
   ShieldCloseIcon,
-} from "@rallly/icons";
-import { Button } from "@rallly/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuItemIconLabel,
-  DropdownMenuTrigger,
-} from "@rallly/ui/dropdown-menu";
-import Head from "next/head";
+  XIcon,
+} from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/router";
+import { useParams, usePathname } from "next/navigation";
 import React from "react";
 
-import { Container } from "@/components/container";
+import { GroupPollIcon } from "@/app/[locale]/(admin)/app-card";
+import { LogoutButton } from "@/app/components/logout-button";
 import { InviteDialog } from "@/components/invite-dialog";
-import { StandardLayout } from "@/components/layouts/standard-layout";
-import {
-  TopBar,
-  TopBarTitle,
-} from "@/components/layouts/standard-layout/top-bar";
+import { LoginLink } from "@/components/login-link";
 import {
   PageDialog,
   PageDialogDescription,
@@ -41,158 +27,65 @@ import {
 import ManagePoll from "@/components/poll/manage-poll";
 import NotificationsToggle from "@/components/poll/notifications-toggle";
 import { LegacyPollContextProvider } from "@/components/poll/poll-context-provider";
-import { PollStatus } from "@/components/poll-status";
-import { Skeleton } from "@/components/skeleton";
 import { Trans } from "@/components/trans";
 import { useUser } from "@/components/user-provider";
 import { usePoll } from "@/contexts/poll";
-import Error404 from "@/pages/404";
-
-import { NextPageWithLayout } from "../../types";
-
-const StatusControl = () => {
-  const poll = usePoll();
-  const state = poll.event ? "closed" : poll.closed ? "paused" : "live";
-  const queryClient = trpc.useContext();
-  const reopen = trpc.polls.reopen.useMutation({
-    onMutate: () => {
-      queryClient.polls.get.setData({ urlId: poll.id }, (oldPoll) => {
-        if (!oldPoll) {
-          return;
-        }
-        return {
-          ...oldPoll,
-          event: null,
-        };
-      });
-    },
-    onSuccess: () => {
-      queryClient.polls.invalidate();
-    },
-  });
-  const pause = trpc.polls.pause.useMutation({
-    onMutate: () => {
-      queryClient.polls.get.setData({ urlId: poll.id }, (oldPoll) => {
-        if (!oldPoll) {
-          return;
-        }
-        return {
-          ...oldPoll,
-          closed: true,
-        };
-      });
-    },
-    onSuccess: () => {
-      queryClient.polls.invalidate();
-    },
-  });
-
-  const resume = trpc.polls.resume.useMutation({
-    onMutate: () => {
-      queryClient.polls.get.setData({ urlId: poll.id }, (oldPoll) => {
-        if (!oldPoll) {
-          return;
-        }
-        return {
-          ...oldPoll,
-          closed: false,
-        };
-      });
-    },
-    onSuccess: () => {
-      queryClient.polls.invalidate();
-    },
-  });
-
-  return (
-    <>
-      <DropdownMenu modal={false}>
-        <DropdownMenuTrigger asChild>
-          <Button>
-            <PollStatus status={state} />
-            <ChevronDownIcon className="h-4 w-4" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          {poll.event ? (
-            <DropdownMenuItem
-              onClick={() => {
-                reopen.mutate({ pollId: poll.id });
-              }}
-            >
-              <DropdownMenuItemIconLabel icon={RotateCcw}>
-                <Trans i18nKey="reopenPoll" defaults="Reopen Poll" />
-              </DropdownMenuItemIconLabel>
-            </DropdownMenuItem>
-          ) : (
-            <>
-              {poll.closed ? (
-                <DropdownMenuItem
-                  onClick={() => resume.mutate({ pollId: poll.id })}
-                >
-                  <DropdownMenuItemIconLabel icon={PlayCircleIcon}>
-                    <Trans i18nKey="resumePoll" defaults="Resume" />
-                  </DropdownMenuItemIconLabel>
-                </DropdownMenuItem>
-              ) : (
-                <DropdownMenuItem
-                  onClick={() => pause.mutate({ pollId: poll.id })}
-                >
-                  <DropdownMenuItemIconLabel icon={PauseCircleIcon}>
-                    <Trans i18nKey="pausePoll" defaults="Pause" />
-                  </DropdownMenuItemIconLabel>
-                </DropdownMenuItem>
-              )}
-            </>
-          )}
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </>
-  );
-};
 
 const AdminControls = () => {
-  const poll = usePoll();
-  const pollLink = `/poll/${poll.id}`;
-  const router = useRouter();
   return (
-    <TopBar>
-      <div className="flex flex-col items-start justify-between gap-y-2 gap-x-4 sm:flex-row">
-        <div className="flex min-w-0 gap-4">
-          {router.asPath !== pollLink ? (
-            <Button asChild>
-              <Link href={pollLink}>
-                <ArrowLeftIcon className="h-4 w-4" />
-              </Link>
-            </Button>
-          ) : null}
-          <TopBarTitle title={poll?.title} icon={FileBarChart} />
-        </div>
-        <div className="flex items-center gap-x-2">
-          <NotificationsToggle />
-          <StatusControl />
-          <ManagePoll />
-          <InviteDialog />
-        </div>
-      </div>
-    </TopBar>
+    <div className="flex items-center gap-x-2">
+      <NotificationsToggle />
+      <ManagePoll />
+      <InviteDialog />
+    </div>
   );
 };
 
 const Layout = ({ children }: React.PropsWithChildren) => {
+  const poll = usePoll();
+  const pollLink = `/poll/${poll.id}`;
+  const pathname = usePathname();
   return (
-    <div className="flex min-w-0 grow flex-col">
-      <AdminControls />
-      <div>
-        <Container className="py-3 sm:py-8">{children}</Container>
+    <div className="bg-gray-100">
+      <div className="sticky top-0 z-30 flex flex-col justify-between gap-x-4 gap-y-2.5 border-b bg-gray-100 p-3 sm:flex-row lg:items-center lg:px-5">
+        <div className="flex min-w-0 items-center gap-x-2.5">
+          {pathname === pollLink ? (
+            <Button variant="ghost" asChild>
+              <Link href="/polls">
+                <Icon>
+                  <XIcon />
+                </Icon>
+              </Link>
+            </Button>
+          ) : (
+            <Button variant="ghost" asChild>
+              <Link href={pollLink}>
+                <Icon>
+                  <ArrowLeftIcon />
+                </Icon>
+              </Link>
+            </Button>
+          )}
+          <div>
+            <GroupPollIcon size="xs" />
+          </div>
+          <h1 className="truncate text-sm font-semibold">{poll.title}</h1>
+        </div>
+        <div>
+          <AdminControls />
+        </div>
+      </div>
+      <div className="mx-auto max-w-4xl space-y-3 p-3 lg:space-y-4 lg:px-4 lg:py-8">
+        {children}
       </div>
     </div>
   );
 };
 
-export const PermissionGuard = ({ children }: React.PropsWithChildren) => {
-  const poll = usePoll();
+const PermissionGuard = ({ children }: React.PropsWithChildren) => {
   const { user } = useUser();
+
+  const poll = usePoll();
   if (!poll.adminUrlId) {
     return (
       <PageDialog icon={ShieldCloseIcon}>
@@ -218,24 +111,22 @@ export const PermissionGuard = ({ children }: React.PropsWithChildren) => {
         </PageDialogHeader>
         <PageDialogFooter>
           {user.isGuest ? (
-            <Button asChild variant="primary" size="lg">
-              <Link href="/login">
-                <LogInIcon className="-ml-1 h-5 w-5" />
+            <Button asChild variant="primary">
+              <LoginLink>
+                <LogInIcon className="-ml-1 size-4" />
                 <Trans i18nKey="login" defaults="Login" />
-              </Link>
+              </LoginLink>
             </Button>
           ) : (
-            <Button asChild variant="primary" size="lg">
-              <Link href="/logout">
-                <LogOutIcon className="-ml-1 h-5 w-5" />
-                <Trans i18nKey="loginDifferent" defaults="Switch user" />
-              </Link>
-            </Button>
+            <LogoutButton>
+              <LogOutIcon className="-ml-1 size-4" />
+              <Trans i18nKey="loginDifferent" defaults="Switch user" />
+            </LogoutButton>
           )}
-          <Button asChild size="lg">
+          <Button asChild>
             <Link href={`/invite/${poll.id}`}>
               <Trans i18nKey="goToInvite" defaults="Go to Invite Page" />
-              <ArrowUpRight className="h-4 w-4" />
+              <ArrowUpRight className="size-4" />
             </Link>
           </Button>
         </PageDialogFooter>
@@ -246,50 +137,10 @@ export const PermissionGuard = ({ children }: React.PropsWithChildren) => {
   return <>{children}</>;
 };
 
-const Title = () => {
-  const poll = usePoll();
-  return (
-    <Head>
-      <title>{poll.title}</title>
-    </Head>
-  );
-};
+export const PollLayout = ({ children }: React.PropsWithChildren) => {
+  const params = useParams();
 
-const Prefetch = ({ children }: React.PropsWithChildren) => {
-  const router = useRouter();
-
-  const urlId = router.query.urlId as string;
-
-  const poll = trpc.polls.get.useQuery({ urlId });
-  const participants = trpc.polls.participants.list.useQuery({ pollId: urlId });
-  const watchers = trpc.polls.getWatchers.useQuery({ pollId: urlId });
-
-  if (poll.error?.data?.code === "NOT_FOUND") {
-    return <Error404 />;
-  }
-
-  if (!poll.data || !watchers.data || !participants.data) {
-    return (
-      <div>
-        <TopBar className="flex flex-col items-start justify-between gap-y-2 gap-x-4 sm:flex-row">
-          <Skeleton className="my-2 h-5 w-48" />
-          <div className="flex gap-x-2">
-            <Skeleton className="h-9 w-24" />
-            <Skeleton className="h-9 w-24" />
-            <Skeleton className="h-9 w-24" />
-          </div>
-        </TopBar>
-      </div>
-    );
-  }
-
-  return <>{children}</>;
-};
-
-const PollLayout = ({ children }: React.PropsWithChildren) => {
-  const router = useRouter();
-
-  const urlId = router.query.urlId as string;
+  const urlId = params?.urlId as string;
 
   if (!urlId) {
     // probably navigating away
@@ -297,22 +148,10 @@ const PollLayout = ({ children }: React.PropsWithChildren) => {
   }
 
   return (
-    <Prefetch>
-      <LegacyPollContextProvider>
-        <Title />
-        <PermissionGuard>
-          <Layout>{children}</Layout>
-        </PermissionGuard>
-      </LegacyPollContextProvider>
-    </Prefetch>
+    <LegacyPollContextProvider>
+      <PermissionGuard>
+        <Layout>{children}</Layout>
+      </PermissionGuard>
+    </LegacyPollContextProvider>
   );
 };
-
-export const getPollLayout: NextPageWithLayout["getLayout"] =
-  function getLayout(page) {
-    return (
-      <StandardLayout>
-        <PollLayout>{page}</PollLayout>
-      </StandardLayout>
-    );
-  };

@@ -1,18 +1,17 @@
-import { trpc } from "@rallly/backend";
+import { usePostHog } from "@rallly/posthog/client";
 import { Button } from "@rallly/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@rallly/ui/dialog";
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
 import * as React from "react";
 
 import { Trans } from "@/components/trans";
-import { usePostHog } from "@/utils/posthog";
+import { trpc } from "@/trpc/client";
 
 export const DeletePollDialog: React.FunctionComponent<{
   open: boolean;
@@ -20,11 +19,9 @@ export const DeletePollDialog: React.FunctionComponent<{
   urlId: string;
 }> = ({ open, onOpenChange, urlId }) => {
   const posthog = usePostHog();
-  const queryClient = trpc.useContext();
   const router = useRouter();
   const deletePoll = trpc.polls.delete.useMutation({
     onSuccess: () => {
-      queryClient.polls.invalidate();
       posthog?.capture("deleted poll");
       onOpenChange(false);
       router.replace("/polls");
@@ -38,10 +35,10 @@ export const DeletePollDialog: React.FunctionComponent<{
           <DialogTitle>
             <Trans i18nKey="deletePoll" />
           </DialogTitle>
-          <DialogDescription>
-            <Trans i18nKey="deletePollDescription" />
-          </DialogDescription>
         </DialogHeader>
+        <p className="text-sm">
+          <Trans i18nKey="deletePollDescription" />
+        </p>
         <DialogFooter>
           <Button
             onClick={() => {

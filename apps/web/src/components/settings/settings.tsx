@@ -1,21 +1,28 @@
-import { InfoIcon } from "@rallly/icons";
 import { cn } from "@rallly/ui";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@rallly/ui/card";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@rallly/ui/tooltip";
+import { InfoIcon } from "lucide-react";
 
 export const Settings = ({ children }: React.PropsWithChildren) => {
-  return <div className="px-4 py-3 md:p-6">{children}</div>;
+  return <div className="space-y-6">{children}</div>;
 };
 
 export const SettingsHeader = ({ children }: React.PropsWithChildren) => {
   return (
-    <div className="mb-4 md:mb-8">
+    <div className="mb-4 text-lg font-semibold md:mb-8">
       <h2>{children}</h2>
     </div>
   );
 };
 
 export const SettingsContent = ({ children }: React.PropsWithChildren) => {
-  return <div className="space-y-8">{children}</div>;
+  return <div className="space-y-6">{children}</div>;
 };
 
 export const SettingsSection = (props: {
@@ -24,13 +31,13 @@ export const SettingsSection = (props: {
   children: React.ReactNode;
 }) => {
   return (
-    <div className="grid gap-3 md:gap-4">
-      <div>
-        <h2 className="mb-1 text-base font-semibold">{props.title}</h2>
-        <p className="text-muted-foreground text-sm">{props.description}</p>
-      </div>
-      <div>{props.children}</div>
-    </div>
+    <Card>
+      <CardHeader>
+        <CardTitle>{props.title}</CardTitle>
+        <CardDescription>{props.description}</CardDescription>
+      </CardHeader>
+      <CardContent>{props.children}</CardContent>
+    </Card>
   );
 };
 
@@ -51,7 +58,7 @@ export const SettingsItemTitle = ({
       {hint ? (
         <Tooltip>
           <TooltipTrigger asChild>
-            <InfoIcon className="inline-block h-4 w-4 text-gray-500" />
+            <InfoIcon className="inline-block size-4 text-gray-500" />
           </TooltipTrigger>
           <TooltipContent side="right" className="max-w-sm">
             {hint}

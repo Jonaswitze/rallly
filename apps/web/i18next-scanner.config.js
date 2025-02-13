@@ -1,9 +1,8 @@
 const typescriptTransform = require("i18next-scanner-typescript");
 
 module.exports = {
-  input: ["src/**/*.{ts,tsx}"],
+  input: ["src/**/*.{ts,tsx}", "!src/next-auth*.ts"],
   options: {
-    keySeparator: ".",
     nsSeparator: false,
     defaultNs: "app",
     defaultValue: "__STRING_NOT_TRANSLATED__",
@@ -13,10 +12,6 @@ module.exports = {
     removeUnusedKeys: true,
     func: {
       list: ["t"],
-      extensions: [".js", ".jsx"],
-    },
-    trans: {
-      extensions: [".js", ".jsx"],
     },
     resource: {
       loadPath: "public/locales/{{lng}}/{{ns}}.json",

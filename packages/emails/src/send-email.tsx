@@ -1,26 +1,21 @@
 import * as aws from "@aws-sdk/client-ses";
 import { defaultProvider } from "@aws-sdk/credential-provider-node";
-import { render } from "@react-email/render";
-import { createTransport, Transporter } from "nodemailer";
+import { renderAsync } from "@react-email/render";
+import { waitUntil } from "@vercel/functions";
+import type { Transporter } from "nodemailer";
+import { createTransport } from "nodemailer";
 import type Mail from "nodemailer/lib/mailer";
-import previewEmail from "preview-email";
-import React from "react";
 
-import * as templates from "./templates";
-
-type Templates = typeof templates;
-
-type TemplateName = keyof typeof templates;
-
-type TemplateProps<T extends TemplateName> = React.ComponentProps<
-  TemplateComponent<T>
->;
-
-type TemplateComponent<T extends TemplateName> = Templates[T];
+import { i18nDefaultConfig, i18nInstance } from "./i18n";
+import { templates } from "./templates";
+import type { TemplateComponent, TemplateName, TemplateProps } from "./types";
 
 type SendEmailOptions<T extends TemplateName> = {
   to: string;
-  subject: string;
+  from?: {
+    name: string;
+    address: string;
+  };
   props: TemplateProps<T>;
   attachments?: Mail.Options["attachments"];
 };
@@ -39,14 +34,6 @@ export type SupportedEmailProviders = EmailProviderConfig["name"];
 
 type EmailClientConfig = {
   /**
-   * Whether to open previews of each email in the browser
-   */
-  openPreviews?: boolean;
-  /**
-   * Whether to send emails to the test server
-   */
-  useTestServer: boolean;
-  /**
    * Email provider config
    */
   provider: EmailProviderConfig;
@@ -59,6 +46,18 @@ type EmailClientConfig = {
       address: string;
     };
   };
+  /**
+   * Context to pass to each email
+   */
+  config: {
+    logoUrl: string;
+    baseUrl: string;
+    domain: string;
+    supportEmail: string;
+  };
+
+  locale?: string;
+  onError?: (error: Error) => void;
 };
 
 export class EmailClient {
@@ -69,38 +68,75 @@ export class EmailClient {
     this.config = config;
   }
 
+  queueTemplate<T extends TemplateName>(
+    templateName: T,
+    options: SendEmailOptions<T>,
+  ) {
+    const promise = this.sendTemplate(templateName, options);
+    waitUntil(promise);
+  }
+
   async sendTemplate<T extends TemplateName>(
     templateName: T,
     options: SendEmailOptions<T>,
   ) {
-    if (!process.env.SUPPORT_EMAIL) {
-      console.info("SUPPORT_EMAIL not configured - skipping email send");
-      return;
-    }
+    const locale = this.config.locale ?? "en";
+
+    await i18nInstance.init({
+      ...i18nDefaultConfig,
+      lng: locale,
+    });
+
+    const ctx = {
+      ...this.config.config,
+      i18n: i18nInstance,
+      t: i18nInstance.getFixedT(locale),
+    };
 
     const Template = templates[templateName] as TemplateComponent<T>;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const html = render(<Template {...(options.props as any)} />);
+    const subject = Template.getSubject?.(options.props, ctx);
+    const component = (
+      <Template
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        {...(options.props as any)}
+        ctx={ctx}
+      />
+    );
+
+    const [html, text] = await Promise.all([
+      renderAsync(component),
+      renderAsync(component, { plainText: true }),
+    ]);
 
     try {
       await this.sendEmail({
-        from: this.config.mail.from,
+        from: options.from || this.config.mail.from,
         to: options.to,
-        subject: options.subject,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        subject,
         html,
+        text,
         attachments: options.attachments,
       });
     } catch (e) {
-      console.error("Error sending email", templateName, e);
+      const enhancedError = new Error(
+        `Failed to send email template: ${templateName}`,
+        {
+          cause: e instanceof Error ? e : new Error(String(e)),
+        },
+      );
+      Object.assign(enhancedError, {
+        templateName,
+        recipient: options.to,
+        subject,
+      });
+      this.config.onError?.(enhancedError);
     }
   }
 
   async sendEmail(options: Mail.Options) {
-    if (this.config.openPreviews) {
-      previewEmail(options, {
-        openSimulator: false,
-      });
+    if (!process.env["SUPPORT_EMAIL"]) {
+      console.info("ℹ SUPPORT_EMAIL not configured - skipping email send");
+      return;
     }
 
     try {
@@ -117,17 +153,10 @@ export class EmailClient {
       return this.cachedTransport;
     }
 
-    if (this.config.useTestServer) {
-      this.cachedTransport = createTransport({
-        port: 4025,
-      });
-      return this.cachedTransport;
-    }
-
     switch (this.config.provider.name) {
       case "ses": {
         const ses = new aws.SES({
-          region: process.env["AWS" + "_REGION"],
+          region: process.env["AWS" + "_REGION"] as string,
           credentialDefaultProvider: defaultProvider,
         });
 
@@ -141,26 +170,22 @@ export class EmailClient {
         break;
       }
       case "smtp": {
-        const hasAuth = process.env.SMTP_USER || process.env.SMTP_PWD;
+        const hasAuth = process.env["SMTP_USER"] || process.env["SMTP_PWD"];
         this.cachedTransport = createTransport({
-          host: process.env.SMTP_HOST,
-          port: process.env.SMTP_PORT
-            ? parseInt(process.env.SMTP_PORT)
+          host: process.env["SMTP_HOST"],
+          port: process.env["SMTP_PORT"]
+            ? parseInt(process.env["SMTP_PORT"])
             : undefined,
-          secure: process.env.SMTP_SECURE === "true",
+          secure: process.env["SMTP_SECURE"] === "true",
           auth: hasAuth
             ? {
-                user: process.env.SMTP_USER,
-                pass: process.env.SMTP_PWD,
+                user: process.env["SMTP_USER"],
+                pass: process.env["SMTP_PWD"],
               }
             : undefined,
-          tls:
-            process.env.SMTP_TLS_ENABLED === "true"
-              ? {
-                  ciphers: "SSLv3",
-                  rejectUnauthorized: false,
-                }
-              : undefined,
+          tls: {
+            rejectUnauthorized: process.env["SMTP_TLS_ENABLED"] === "true",
+          },
         });
         break;
       }

@@ -1,30 +1,42 @@
-import { trpc, UserSession } from "@rallly/backend";
-import { useTranslation } from "next-i18next";
+"use client";
+import { usePostHog } from "@rallly/posthog/client";
+import type { Session } from "next-auth";
+import { signOut, useSession } from "next-auth/react";
 import React from "react";
 
-import { PostHogProvider } from "@/contexts/posthog";
-import { useWhoAmI } from "@/contexts/whoami";
-import { isSelfHosted } from "@/utils/constants";
+import { useSubscription } from "@/contexts/plan";
+import { PreferencesProvider } from "@/contexts/preferences";
+import { useTranslation } from "@/i18n/client";
+import { trpc } from "@/trpc/client";
+import { isOwner } from "@/utils/permissions";
 
 import { useRequiredContext } from "./use-required-context";
 
+type UserData = {
+  id?: string;
+  name: string;
+  email?: string | null;
+  isGuest: boolean;
+  tier: "guest" | "hobby" | "pro";
+  timeZone?: string | null;
+  timeFormat?: "hours12" | "hours24" | null;
+  weekStart?: number | null;
+  image?: string | null;
+  locale?: string | null;
+};
+
 export const UserContext = React.createContext<{
-  user: UserSession & { name: string };
-  refresh: () => void;
-  ownsObject: (obj: { userId: string | null }) => boolean;
+  user: UserData;
+  refresh: (data?: Record<string, unknown>) => Promise<Session | null>;
+  ownsObject: (obj: {
+    userId?: string | null;
+    guestId?: string | null;
+  }) => boolean;
+  logout: () => Promise<void>;
 } | null>(null);
 
 export const useUser = () => {
   return useRequiredContext(UserContext, "UserContext");
-};
-
-export const useAuthenticatedUser = () => {
-  const { user, ...rest } = useRequiredContext(UserContext, "UserContext");
-  if (user.isGuest) {
-    throw new Error("Forget to prefetch user identity");
-  }
-
-  return { user, ...rest };
 };
 
 export const IfAuthenticated = (props: { children?: React.ReactNode }) => {
@@ -46,66 +58,76 @@ export const IfGuest = (props: { children?: React.ReactNode }) => {
 };
 
 export const UserProvider = (props: { children?: React.ReactNode }) => {
-  const { t } = useTranslation();
+  const session = useSession();
+  const user = session.data?.user;
+  const subscription = useSubscription();
+  const updatePreferences = trpc.user.updatePreferences.useMutation();
+  const { t, i18n } = useTranslation();
 
-  const queryClient = trpc.useContext();
+  const posthog = usePostHog();
 
-  const user = useWhoAmI();
-  const { data: userPreferences } = trpc.userPreferences.get.useQuery();
+  const isGuest = !user?.email;
+  const tier = isGuest ? "guest" : subscription?.active ? "pro" : "hobby";
 
-  // TODO (Luke Vella) [2023-09-19]: Remove this when we have a better way to query for an active subscription
-  trpc.user.subscription.useQuery(undefined, {
-    enabled: !isSelfHosted,
-  });
-
-  const name = user
-    ? user.isGuest === false
-      ? user.name
-      : user.id.substring(0, 10)
-    : t("guest");
-
-  if (!user || userPreferences === undefined) {
-    return null;
-  }
+  React.useEffect(() => {
+    if (user) {
+      posthog?.identify(user.id, {
+        email: user.email,
+        name: user.name,
+        tier,
+        timeZone: user.timeZone ?? null,
+        image: user.image ?? null,
+        locale: user.locale ?? i18n.language,
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
 
   return (
     <UserContext.Provider
       value={{
-        user: { ...user, name },
-        refresh: () => {
-          return queryClient.whoami.invalidate();
+        user: {
+          id: user?.id,
+          name: user?.name ?? t("guest"),
+          email: user?.email || null,
+          isGuest,
+          tier,
+          timeZone: user?.timeZone ?? null,
+          image: user?.image ?? null,
+          locale: user?.locale ?? i18n.language,
         },
-        ownsObject: ({ userId }) => {
-          return userId ? [user.id].includes(userId) : false;
+        refresh: session.update,
+        logout: async () => {
+          await signOut();
+          posthog?.capture("logout");
+          posthog?.reset();
+        },
+        ownsObject: (resource) => {
+          return user ? isOwner(resource, { id: user.id, isGuest }) : false;
         },
       }}
     >
-      <PostHogProvider>{props.children}</PostHogProvider>
+      <PreferencesProvider
+        initialValue={{
+          locale: user?.locale ?? undefined,
+          timeZone: user?.timeZone ?? undefined,
+          timeFormat: user?.timeFormat ?? undefined,
+          weekStart: user?.weekStart ?? undefined,
+        }}
+        onUpdate={async (newPreferences) => {
+          if (!isGuest) {
+            await updatePreferences.mutateAsync({
+              locale: newPreferences.locale ?? undefined,
+              timeZone: newPreferences.timeZone ?? undefined,
+              timeFormat: newPreferences.timeFormat ?? undefined,
+              weekStart: newPreferences.weekStart ?? undefined,
+            });
+          }
+          await session.update(newPreferences);
+        }}
+      >
+        {props.children}
+      </PreferencesProvider>
     </UserContext.Provider>
   );
 };
-
-type ParticipantOrComment = {
-  userId: string | null;
-};
-
-// eslint-disable-next-line @typescript-eslint/ban-types
-export const withSession = <P extends {} = {}>(
-  component: React.ComponentType<P>,
-) => {
-  const ComposedComponent: React.FunctionComponent<P> = (props: P) => {
-    const Component = component;
-    return (
-      <UserProvider>
-        <Component {...props} />
-      </UserProvider>
-    );
-  };
-  ComposedComponent.displayName = `withUser(${component.displayName})`;
-  return ComposedComponent;
-};
-
-/**
- * @deprecated Stop using this function. All object
- */
-export const isUnclaimed = (obj: ParticipantOrComment) => !obj.userId;

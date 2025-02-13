@@ -1,33 +1,23 @@
-import { expect, Page, test } from "@playwright/test";
-import smtpTester, { SmtpTester } from "smtp-tester";
+import type { Page } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 import { NewPollPage } from "tests/new-poll-page";
+
+import { deleteAllMessages } from "./mailpit/mailpit";
 
 test.describe.serial(() => {
   let page: Page;
 
-  let mailServer: SmtpTester;
   test.beforeAll(async ({ browser }) => {
     page = await browser.newPage();
-    mailServer = smtpTester.init(4025);
-  });
-
-  test.afterAll(async () => {
-    mailServer.stop();
+    await deleteAllMessages(); // Clean the mailbox before tests
   });
 
   test("create a new poll", async () => {
     const newPollPage = new NewPollPage(page);
 
-    await newPollPage.goto();
-    await newPollPage.createPollAndCloseDialog();
+    await newPollPage.createPollAndCloseDialog({ name: "Monthly Meetup" });
 
     await expect(page.getByTestId("poll-title")).toHaveText("Monthly Meetup");
-
-    // const { email } = await mailServer.captureOne("john.doe@example.com", {
-    //   wait: 5000,
-    // });
-
-    // expect(email.headers.subject).toBe("Let's find a date for Monthly Meetup");
   });
 
   // delete the poll we just created
@@ -35,12 +25,12 @@ test.describe.serial(() => {
     const manageButton = page.getByText("Manage");
     await manageButton.waitFor();
     await manageButton.click();
-    await page.click("text=Delete poll");
+    await page.click("text=Delete");
 
     const deletePollDialog = page.getByRole("dialog");
 
     deletePollDialog.getByRole("button", { name: "delete" }).click();
 
-    await expect(page).toHaveURL("/polls");
+    await expect(page).toHaveURL("/login?redirectTo=%2Fpolls");
   });
 });

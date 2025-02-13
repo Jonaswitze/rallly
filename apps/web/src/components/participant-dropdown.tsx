@@ -1,5 +1,5 @@
-import { trpc } from "@rallly/backend";
-import { PencilIcon, TagIcon, TrashIcon } from "@rallly/icons";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { usePostHog } from "@rallly/posthog/client";
 import { Button } from "@rallly/ui/button";
 import {
   Dialog,
@@ -28,17 +28,19 @@ import {
   FormMessage,
 } from "@rallly/ui/form";
 import { Input } from "@rallly/ui/input";
+import { PencilIcon, TagIcon, TrashIcon } from "lucide-react";
 import { useTranslation } from "next-i18next";
 import React from "react";
-import { SubmitHandler, useForm } from "react-hook-form";
+import type { SubmitHandler } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { useMount } from "react-use";
+import { z } from "zod";
 
+import { OptimizedAvatarImage } from "@/components/optimized-avatar-image";
 import { useDeleteParticipantMutation } from "@/components/poll/mutations";
 import { Trans } from "@/components/trans";
+import { trpc } from "@/trpc/client";
 import { useFormValidation } from "@/utils/form-validation";
-import { usePostHog } from "@/utils/posthog";
-
-import { Participant } from ".prisma/client";
 
 export const ParticipantDropdown = ({
   participant,
@@ -48,7 +50,12 @@ export const ParticipantDropdown = ({
   align,
 }: {
   disabled?: boolean;
-  participant: Participant;
+  participant: {
+    name: string;
+    userId?: string;
+    email?: string;
+    id: string;
+  };
   align?: "start" | "end";
   onEdit: () => void;
   children: React.ReactNode;
@@ -70,13 +77,18 @@ export const ParticipantDropdown = ({
         </DropdownMenuTrigger>
         <DropdownMenuContent align={align}>
           <DropdownMenuLabel>
-            <div className="grid gap-0.5">
-              <div>{participant.name}</div>
-              {participant.email ? (
-                <div className="text-muted-foreground text-xs font-normal">
-                  {participant.email}
-                </div>
-              ) : null}
+            <div className="flex items-center gap-x-2">
+              <div>
+                <OptimizedAvatarImage name={participant.name} size="md" />
+              </div>
+              <div className="grid gap-0.5">
+                <div>{participant.name}</div>
+                {participant.email ? (
+                  <div className="text-muted-foreground text-xs font-normal">
+                    {participant.email}
+                  </div>
+                ) : null}
+              </div>
             </div>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
@@ -91,12 +103,11 @@ export const ParticipantDropdown = ({
             </DropdownMenuItemIconLabel>
           </DropdownMenuItem>
           <DropdownMenuItem
-            className="text-rose-600"
+            className="text-destructive"
             onClick={() => setIsDeleteParticipantModalVisible(true)}
           >
-            <DropdownMenuItemIconLabel icon={TrashIcon}>
-              <Trans i18nKey="delete" />
-            </DropdownMenuItemIconLabel>
+            <TrashIcon className="size-4" />
+            <Trans i18nKey="delete" />
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -173,6 +184,10 @@ type ChangeNameForm = {
   name: string;
 };
 
+const changeNameSchema = z.object({
+  name: z.string().trim().min(1),
+});
+
 const ChangeNameModal = (props: {
   oldName: string;
   participantId: string;
@@ -180,10 +195,8 @@ const ChangeNameModal = (props: {
   onOpenChange: (open: boolean) => void;
 }) => {
   const posthog = usePostHog();
-  const queryClient = trpc.useContext();
   const changeName = trpc.polls.participants.rename.useMutation({
     onSuccess: (_, { participantId, newName }) => {
-      queryClient.polls.participants.invalidate();
       posthog?.capture("changed name", {
         participantId,
         oldName: props.oldName,
@@ -195,6 +208,7 @@ const ChangeNameModal = (props: {
     defaultValues: {
       name: props.oldName,
     },
+    resolver: zodResolver(changeNameSchema),
   });
 
   const { control, reset, handleSubmit, setFocus, formState } = form;

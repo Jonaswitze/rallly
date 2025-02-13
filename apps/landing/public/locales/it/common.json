@@ -19,8 +19,11 @@
   "pricing": "Prezzi",
   "bestDoodleAlternative": "Migliore alternativa Doodle",
   "freeSchedulingPoll": "Sondaggio Di Pianificazione Gratuito",
-  "findATime": "Trova un orario",
   "getStarted": "Inizia ora",
   "availabilityPoll": "Sondaggio Di Disponibilità",
-  "solutions": "Soluzioni"
+  "solutions": "Soluzioni",
+  "howItWorks": "Come funziona",
+  "status": "Stato",
+  "when2MeetAlternative": "Alternativa When2Meet",
+  "meetingPoll": "Sondaggio per Riunione"
 }

@@ -1,8 +1,7 @@
 import * as React from "react";
 
-import { DateIconInner } from "@/components/date-icon";
-
-import PollOption, { PollOptionProps } from "./poll-option";
+import type { PollOptionProps } from "./poll-option";
+import PollOption from "./poll-option";
 
 export interface DateOptionProps extends PollOptionProps {
   dow: string;
@@ -13,7 +12,6 @@ export interface DateOptionProps extends PollOptionProps {
 const DateOption: React.FunctionComponent<DateOptionProps> = ({
   dow,
   day,
-  month,
   ...rest
 }) => {
   return (
@@ -22,7 +20,11 @@ const DateOption: React.FunctionComponent<DateOptionProps> = ({
        * Intentionally using the month prop for the day of week here as a temporary measure
        * until we update this component.
        */}
-      <DateIconInner day={day} dow={dow} month={month} />
+      <div className="text-sm">
+        <span className="font-semibold">
+          {day} {dow}
+        </span>
+      </div>
     </PollOption>
   );
 };
